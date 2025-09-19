@@ -15,6 +15,7 @@ const userList = [];
 
 // Set up middlewares
 app.use(cors({ optionsSuccessStatus: 200 })); // some legacy browsers choke on 204
+app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static(path.join(process.cwd(), '/public')));
 
 // Define routers
@@ -123,45 +124,48 @@ app.post('/api/users/:_id/exercises', (req, res) => {
 
 app.get('/api/users/:_id/logs', (req, res) => {
   const userId = req.params._id;
-
-  // Check id param
-  if (!userId) {
-    throw new Error('invalid id');
+  try {
+    // Check id param
+    if (!userId) {
+      throw new Error('invalid id');
+    };
+  
+    // Find user by id
+    const indexOfUser = userList.findIndex((user) => user._id === userId);
+    if (indexOfUser === -1) {
+      throw new Error('invalid id');
+    };
+  
+    // Return empty array if a user don't have any exercise
+    let user = userList[indexOfUser];
+    if (!user.log) {
+      return res.json([]);
+    };
+  
+    let { from, to, limit } = req.query;
+    let filteredLog = user.log;
+  
+    // Convert query params into convenient type
+    if (from) {
+      from = new Date(from);
+      filteredLog = filteredLog.filter((exercise) => new Date(exercise.date) >= from);
+    } else if (to) {
+      to = new Date(to);
+      filteredLog = filteredLog.filter((exercise) => new Date(exercise.date) <= to);
+    } else if (limit) {
+      const n = Number(limit);
+      if (n >= 0) { filteredLog = filteredLog.slice(0, n);}
+    };
+  
+    return res.json({
+      username: user.username,
+      count: user.count,
+      _id: user._id,
+      log: filteredLog,
+    });
+  } catch (error) {
+    return res.json({ error: error.message });
   };
-
-  // Find user by id
-  const indexOfUser = userList.findIndex((user) => user._id === userId);
-  if (indexOfUser === -1) {
-    throw new Error('invalid id');
-  };
-
-  // Return empty array if a user don't have any exercise
-  let user = userList[indexOfUser];
-  if (!user.log) {
-    return res.json([]);
-  };
-
-  let { from, to, limit } = req.query;
-  let filteredLog = user.log;
-
-  // Convert query params into convenient type
-  if (from) {
-    from = new Date(from);
-    filteredLog = filteredLog.filter((exercise) => new Date(exercise.date) >= from);
-  } else if (to) {
-    to = new Date(to);
-    filteredLog = filteredLog.filter((exercise) => new Date(exercise.date) <= to);
-  } else if (limit) {
-    const n = Number(limit);
-    if (n >= 0) { filteredLog = filteredLog.slice(0, n);}
-  };
-
-  return res.json({
-    username: user.username,
-    count: user.count,
-    _id: user._id,
-    log: filteredLog,
-  });
 });
 
 // Start server
