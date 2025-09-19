@@ -71,12 +71,12 @@ app.post('/api/users/:_id/exercises', (req, res) => {
     };
     
     // Find user by id
-    const indexOfUser = listUsers.findIndex((user) => user._id === userId);
+    const indexOfUser = userList.findIndex((user) => user._id === userId);
     if (indexOfUser === -1) {
       throw new Error('invalid id');
     };
 
-    let user = listUsers[indexOfUser];
+    let user = userList[indexOfUser];
 
     // Checking fields
     let { description, duration, date } = req.body;
@@ -87,7 +87,7 @@ app.post('/api/users/:_id/exercises', (req, res) => {
     } else {
       duration = Number(duration);
     };
-    
+
     // Return current date for exercise if date field is missing
     if (!date) {
       const current = Date.now();
@@ -119,6 +119,49 @@ app.post('/api/users/:_id/exercises', (req, res) => {
   } catch(error) {
     return res.json({ error: error.message });
   };
+});
+
+app.get('/api/users/:_id/logs', (req, res) => {
+  const userId = req.params._id;
+
+  // Check id param
+  if (!userId) {
+    throw new Error('invalid id');
+  };
+
+  // Find user by id
+  const indexOfUser = userList.findIndex((user) => user._id === userId);
+  if (indexOfUser === -1) {
+    throw new Error('invalid id');
+  };
+
+  // Return empty array if a user don't have any exercise
+  let user = userList[indexOfUser];
+  if (!user.log) {
+    return res.json([]);
+  };
+
+  let { from, to, limit } = req.query;
+  let filteredLog = user.log;
+
+  // Convert query params into convenient type
+  if (from) {
+    from = new Date(from);
+    filteredLog = filteredLog.filter((exercise) => new Date(exercise.date) >= from);
+  } else if (to) {
+    to = new Date(to);
+    filteredLog = filteredLog.filter((exercise) => new Date(exercise.date) <= to);
+  } else if (limit) {
+    const n = Number(limit);
+    if (n >= 0) { filteredLog = filteredLog.slice(0, n);}
+  };
+
+  return res.json({
+    username: user.username,
+    count: user.count,
+    _id: user._id,
+    log: filteredLog,
+  });
 });
 
 // Start server
