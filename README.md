@@ -168,9 +168,8 @@ curl -X POST -d "description=run&duration=30&date=2020-01-01" http://localhost:3
   }
   ```
 
-- Possible error responses:
+- If `_id` is missing or invalid:
   - `"error": "invalid id"`: user not found
-  - `"error": "don't exist any exercise"`: user has no exercises
 
 ## License
 MIT
