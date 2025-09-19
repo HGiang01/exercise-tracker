@@ -61,6 +61,66 @@ app.get('/api/users', (req, res) => {
   );
 });
 
+app.post('/api/users/:_id/exercises', (req, res) => {
+  try {
+    const userId = req.params._id;
+    
+    // Check id param
+    if (!userId) {
+      throw new Error('missing id in router param');
+    };
+    
+    // Find user by id
+    const indexOfUser = listUsers.findIndex((user) => user._id === userId);
+    if (indexOfUser === -1) {
+      throw new Error('invalid id');
+    };
+
+    let user = listUsers[indexOfUser];
+
+    // Checking fields
+    let { description, duration, date } = req.body;
+    if (!description) {
+      throw new Error('missing description');
+    } else if (!duration) {
+      throw new Error('missing duration');
+    } else {
+      duration = Number(duration);
+    };
+    
+    // Return current date for exercise if date field is missing
+    if (!date) {
+      const current = Date.now();
+      date = new Date(current);
+    } else {
+      date = new Date(date);
+    };
+
+    // Reformat date
+    date = date.toDateString();
+
+    // Update user object
+    // Add exercise
+    const exercise = {
+      description,
+      duration,
+      date,
+    };
+    user.log.push(exercise);
+
+    // Update count of exercise
+    user.count = user.log.length;
+
+    return res.json({
+      username: user.username,
+      _id: user._id,
+      ...exercise,
+    });
+  } catch(error) {
+    return res.json({ error: error.message });
+  };
+});
+
 // Start server
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
