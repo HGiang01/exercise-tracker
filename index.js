@@ -1,10 +1,10 @@
 // Import required modules
-import dotenv from "dotenv";
-import { fileURLToPath } from "url";
-import path, { dirname } from "path";
-import express from "express";
-import cors from "cors";
-import { v4 as uuidv4 } from "uuid";
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import path, { dirname } from 'path';
+import express from 'express';
+import cors from 'cors';
+import { v4 as uuidv4 } from 'uuid';
 
 // Configure and init app
 dotenv.config();
@@ -15,20 +15,20 @@ const userList = [];
 
 // Set up middlewares
 app.use(cors({ optionsSuccessStatus: 200 })); // some legacy browsers choke on 204
-app.use("/public", express.static(path.join(process.cwd(), "/public")));
+app.use('/public', express.static(path.join(process.cwd(), '/public')));
 
 // Define routers
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
 
-app.post("/api/users", (req, res) => {
+app.post('/api/users', (req, res) => {
   try {
     const username = req.body.username;
   
     // Check username field
     if (!username) {
-      throw new Error("username is invalid");
+      throw new Error('username is invalid');
     };
 
     // Create user
@@ -47,10 +47,19 @@ app.post("/api/users", (req, res) => {
   }
   catch(error) {
     return res.json({ error: error.message });
-  }
+  };
 });
 
-
+app.get('/api/users', (req, res) => {
+  return res.json(
+    userList.map((user) => {
+      return {
+        username: user.username,
+        _id: user._id,
+      };
+    })
+  );
+});
 
 // Start server
 const listener = app.listen(process.env.PORT || 3000, () => {
